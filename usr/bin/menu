@@ -1,0 +1,210 @@
+#!/bin/bash
+
+# Color definitions
+TITLE="\e[1;31m"    # Red, bold
+BORDER="\e[0;31m"   # Red
+MENU_NUM="\e[1;33m" # Yellow, bold
+MENU_TXT="\e[0;37m" # White
+HIGHLIGHT="\e[1;31m" # Red, bold
+WARNING="\e[1;33m"  # Yellow, bold
+RESET="\e[0m"       # Reset colors
+
+# Get terminal width
+TERM_WIDTH=$(tput cols)
+if [ -z "$TERM_WIDTH" ] || [ "$TERM_WIDTH" -lt 70 ]; then
+    TERM_WIDTH=70
+fi
+
+# Function to display menu in two columns
+show_menu() {
+    clear
+    
+    # Calculate border line
+    BORDER_LINE=""
+    for ((i=0; i<TERM_WIDTH; i++)); do
+        BORDER_LINE="${BORDER_LINE}-"
+    done
+    
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+    echo -e "${TITLE}                         BATOCERA MANAGEMENT MENU                         ${RESET}"
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+    
+    # First column - ensure proper spacing for alignment
+    echo -e "${MENU_NUM} 1.${RESET} ${MENU_TXT}Restart EmulationStation${RESET}        ${MENU_NUM}11.${RESET} ${MENU_TXT}Backup Overlay File${RESET}"
+    echo -e "${MENU_NUM} 2.${RESET} ${MENU_TXT}Start KODI Media Center${RESET}         ${MENU_NUM}12.${RESET} ${MENU_TXT}Toggle Write Access to /boot${RESET}"
+    echo -e "${MENU_NUM} 3.${RESET} ${MENU_TXT}Reboot System${RESET}                   ${MENU_NUM}13.${RESET} ${MENU_TXT}Reset RetroArch Settings${RESET}"
+    echo -e "${MENU_NUM} 4.${RESET} ${MENU_TXT}Shutdown System${RESET}                 ${MENU_NUM}14.${RESET} ${MENU_TXT}Save Overlay After Modifications${RESET}"
+    echo -e "${MENU_NUM} 5.${RESET} ${MENU_TXT}Kill Running Emulators${RESET}          ${MENU_NUM}15.${RESET} ${MENU_TXT}Launch BTOP${RESET}"
+    echo -e "${MENU_NUM} 6.${RESET} ${MENU_TXT}Check EmulationStation Status${RESET}   ${MENU_NUM}16.${RESET} ${MENU_TXT}List Available Controllers${RESET}"
+    echo -e "${MENU_NUM} 7.${RESET} ${MENU_TXT}Check Emulator Status${RESET}           ${MENU_NUM}17.${RESET} ${MENU_TXT}Test Controller${RESET}"
+    echo -e "${MENU_NUM} 8.${RESET} ${MENU_TXT}Show Architecture${RESET}               ${MENU_NUM}18.${RESET} ${MENU_TXT}View Input Devices${RESET}"
+    echo -e "${MENU_NUM} 9.${RESET} ${MENU_TXT}Show BATOCERA Version${RESET}           ${MENU_NUM}19.${RESET} ${MENU_TXT}Generate Support Package${RESET}"
+    echo -e "${MENU_NUM}10.${RESET} ${MENU_TXT}Check for Updates${RESET}               ${MENU_NUM}20.${RESET} ${MENU_TXT}Exit${RESET}"
+    
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+    echo -e "${HIGHLIGHT}Enter your choice [1-20]:${RESET} "
+}
+
+# Function to pause execution
+pause() {
+    echo
+    echo -e "${HIGHLIGHT}Press Enter to continue...${RESET}"
+    read
+}
+
+# Function to display operation header
+operation_header() {
+    echo
+    
+    # Calculate border line
+    BORDER_LINE=""
+    for ((i=0; i<TERM_WIDTH; i++)); do
+        BORDER_LINE="${BORDER_LINE}-"
+    done
+    
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+    echo -e "${HIGHLIGHT}$1${RESET}"
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+}
+
+# Main loop
+while true; do
+    show_menu
+    read choice
+
+    case $choice in
+        1)
+            operation_header "Restarting EmulationStation..."
+            batocera-es-swissknife --restart
+            pause
+            ;;
+        2)
+            operation_header "Starting KODI Media Center..."
+            batocera-es-swissknife --kodi
+            pause
+            ;;
+        3)
+            operation_header "Rebooting system..."
+            echo -e "${WARNING}Are you sure you want to reboot? (y/n)${RESET}"
+            read confirm
+            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                batocera-es-swissknife --reboot
+            fi
+            ;;
+        4)
+            operation_header "Shutting down system..."
+            echo -e "${WARNING}Are you sure you want to shutdown? (y/n)${RESET}"
+            read confirm
+            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                batocera-es-swissknife --shutdown
+            fi
+            ;;
+        5)
+            operation_header "Killing running emulators..."
+            batocera-es-swissknife --emukill
+            pause
+            ;;
+        6)
+            operation_header "Checking EmulationStation status..."
+            pid=$(batocera-es-swissknife --espid)
+            if [ "$pid" = "0" ]; then
+                echo -e "${WARNING}EmulationStation is not active${RESET}"
+            else
+                echo -e "${HIGHLIGHT}EmulationStation is running with PID: $pid${RESET}"
+            fi
+            pause
+            ;;
+        7)
+            operation_header "Checking emulator status..."
+            pid=$(batocera-es-swissknife --emupid)
+            if [ "$pid" = "0" ]; then
+                echo -e "${WARNING}No emulator is active${RESET}"
+            else
+                echo -e "${HIGHLIGHT}Emulator is running with PID: $pid${RESET}"
+            fi
+            pause
+            ;;
+        8)
+            operation_header "Current architecture:"
+            arch=$(batocera-es-swissknife --arch)
+            echo -e "${HIGHLIGHT}$arch${RESET}"
+            pause
+            ;;
+        9)
+            operation_header "BATOCERA version:"
+            version=$(batocera-es-swissknife --version)
+            echo -e "${HIGHLIGHT}$version${RESET}"
+            pause
+            ;;
+        10)
+            operation_header "Checking for updates..."
+            echo -e "${MENU_NUM}1.${RESET} ${MENU_TXT}Check for stable updates${RESET}"
+            echo -e "${MENU_NUM}2.${RESET} ${MENU_TXT}Check for butterfly updates${RESET}"
+            echo -e "${HIGHLIGHT}Enter choice [1-2]:${RESET} "
+            read update_choice
+            if [ "$update_choice" = "1" ]; then
+                batocera-es-swissknife --update
+            elif [ "$update_choice" = "2" ]; then
+                batocera-es-swissknife --update butterfly
+            fi
+            pause
+            ;;
+        11)
+            operation_header "Backing up overlay file..."
+            batocera-es-swissknife --overlay
+            pause
+            ;;
+        12)
+            operation_header "Toggling write access to /boot..."
+            batocera-es-swissknife --remount
+            pause
+            ;;
+        13)
+            operation_header "Resetting RetroArch settings to default..."
+            echo -e "${WARNING}Are you sure? This will reset all RetroArch settings (y/n)${RESET}"
+            read confirm
+            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+                batocera-es-swissknife --reset-ra
+                echo -e "${HIGHLIGHT}RetroArch settings have been reset to default${RESET}"
+            fi
+            pause
+            ;;
+        14)
+            operation_header "Saving overlay after modifications..."
+            batocera-save-overlay
+            pause
+            ;;
+        15)
+            operation_header "Launching BTOP..."
+            btop
+            ;;
+        16)
+            operation_header "Listing available controllers..."
+            sdl2-jstest --list
+            pause
+            ;;
+        17)
+            operation_header "Testing controller"
+            echo -e "${HIGHLIGHT}Enter controller ID to test:${RESET} "
+            read controller_id
+            echo -e "${HIGHLIGHT}Testing controller $controller_id. Press Ctrl+C to exit.${RESET}"
+            sdl2-jstest --test $controller_id
+            ;;
+        18)
+            operation_header "Launching evtest to view input devices..."
+            evtest
+            ;;
+        19)
+            operation_header "Generating support package..."
+            batocera-support
+            pause
+            ;;
+        20)
+            exit 0
+            ;;
+        *)
+            echo -e "${WARNING}Invalid choice. Please try again.${RESET}"
+            pause
+            ;;
+    esac
+done
