@@ -1,13 +1,12 @@
 #!/bin/bash
 
 # Color definitions
-TITLE="\e[1;31m"    # Red, bold
-BORDER="\e[0;31m"   # Red
-MENU_NUM="\e[1;33m" # Yellow, bold
-MENU_TXT="\e[0;37m" # White
+TITLE="\e[1;31m"     # Red, bold
+MENU_NUM="\e[1;33m"  # Yellow, bold
+MENU_TXT="\e[0;37m"  # White
 HIGHLIGHT="\e[1;31m" # Red, bold
-WARNING="\e[1;33m"  # Yellow, bold
-RESET="\e[0m"       # Reset colors
+WARNING="\e[1;33m"   # Yellow, bold
+RESET="\e[0m"        # Reset colors
 
 # Get terminal width
 TERM_WIDTH=$(tput cols)
@@ -15,21 +14,33 @@ if [ -z "$TERM_WIDTH" ] || [ "$TERM_WIDTH" -lt 70 ]; then
     TERM_WIDTH=70
 fi
 
-# Function to display menu in two columns
-show_menu() {
+# Function to pause execution
+pause() {
+    echo
+    echo -e "${HIGHLIGHT}Press Enter to continue...${RESET}"
+    read
+}
+
+# Function to create Wine directory if it doesn't exist
+ensure_wine_directory() {
+    if [ ! -d "/userdata/system/wine/exe" ]; then
+        mkdir -p /userdata/system/wine/exe
+        echo -e "${HIGHLIGHT}Created directory: /userdata/system/wine/exe${RESET}"
+    fi
+}
+
+# Function to display main menu
+show_main_menu() {
     clear
-    
-    # Calculate border line
     BORDER_LINE=""
     for ((i=0; i<TERM_WIDTH; i++)); do
         BORDER_LINE="${BORDER_LINE}-"
     done
-    
-    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+
+    echo -e ""
     echo -e "${TITLE}                         BATOCERA MANAGEMENT MENU                         ${RESET}"
-    echo -e "${BORDER}${BORDER_LINE}${RESET}"
-    
-    # First column - ensure proper spacing for alignment
+    echo -e ""
+
     echo -e "${MENU_NUM} 1.${RESET} ${MENU_TXT}Restart EmulationStation${RESET}        ${MENU_NUM}11.${RESET} ${MENU_TXT}Backup Overlay File${RESET}"
     echo -e "${MENU_NUM} 2.${RESET} ${MENU_TXT}Start KODI Media Center${RESET}         ${MENU_NUM}12.${RESET} ${MENU_TXT}Toggle Write Access to /boot${RESET}"
     echo -e "${MENU_NUM} 3.${RESET} ${MENU_TXT}Reboot System${RESET}                   ${MENU_NUM}13.${RESET} ${MENU_TXT}Reset RetroArch Settings${RESET}"
@@ -39,39 +50,18 @@ show_menu() {
     echo -e "${MENU_NUM} 7.${RESET} ${MENU_TXT}Check Emulator Status${RESET}           ${MENU_NUM}17.${RESET} ${MENU_TXT}Test Controller${RESET}"
     echo -e "${MENU_NUM} 8.${RESET} ${MENU_TXT}Show Architecture${RESET}               ${MENU_NUM}18.${RESET} ${MENU_TXT}View Input Devices${RESET}"
     echo -e "${MENU_NUM} 9.${RESET} ${MENU_TXT}Show BATOCERA Version${RESET}           ${MENU_NUM}19.${RESET} ${MENU_TXT}Generate Support Package${RESET}"
-    echo -e "${MENU_NUM}10.${RESET} ${MENU_TXT}Check for Updates${RESET}               ${MENU_NUM}20.${RESET} ${MENU_TXT}Exit${RESET}"
-    
-    echo -e "${BORDER}${BORDER_LINE}${RESET}"
-    echo -e "${HIGHLIGHT}Enter your choice [1-20]:${RESET} "
+    echo -e "${MENU_NUM}10.${RESET} ${MENU_TXT}Check for Updates${RESET}               ${MENU_NUM}20.${RESET} ${MENU_TXT}Logging Menu${RESET}"
+    echo -e "${MENU_NUM}21.${RESET} ${MENU_TXT}Wine Cellar${RESET}"
+    echo -e "${MENU_NUM}22.${RESET} ${MENU_TXT}Exit${RESET}"
+
+    echo -e ""
+    echo -e "${HIGHLIGHT}Enter your choice [1-22]:${RESET} "
 }
 
-# Function to pause execution
-pause() {
-    echo
-    echo -e "${HIGHLIGHT}Press Enter to continue...${RESET}"
-    read
-}
-
-# Function to display operation header
-operation_header() {
-    echo
+# Function to handle main menu choices
+handle_main_menu() {
+    local choice=$1
     
-    # Calculate border line
-    BORDER_LINE=""
-    for ((i=0; i<TERM_WIDTH; i++)); do
-        BORDER_LINE="${BORDER_LINE}-"
-    done
-    
-    echo -e "${BORDER}${BORDER_LINE}${RESET}"
-    echo -e "${HIGHLIGHT}$1${RESET}"
-    echo -e "${BORDER}${BORDER_LINE}${RESET}"
-}
-
-# Main loop
-while true; do
-    show_menu
-    read choice
-
     case $choice in
         1)
             operation_header "Restarting EmulationStation..."
@@ -87,7 +77,7 @@ while true; do
             operation_header "Rebooting system..."
             echo -e "${WARNING}Are you sure you want to reboot? (y/n)${RESET}"
             read confirm
-            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
                 batocera-es-swissknife --reboot
             fi
             ;;
@@ -95,7 +85,7 @@ while true; do
             operation_header "Shutting down system..."
             echo -e "${WARNING}Are you sure you want to shutdown? (y/n)${RESET}"
             read confirm
-            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
                 batocera-es-swissknife --shutdown
             fi
             ;;
@@ -163,7 +153,7 @@ while true; do
             operation_header "Resetting RetroArch settings to default..."
             echo -e "${WARNING}Are you sure? This will reset all RetroArch settings (y/n)${RESET}"
             read confirm
-            if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
                 batocera-es-swissknife --reset-ra
                 echo -e "${HIGHLIGHT}RetroArch settings have been reset to default${RESET}"
             fi
@@ -184,11 +174,11 @@ while true; do
             pause
             ;;
         17)
-            operation_header "Testing controller"
+            operation_header "Testing controller..."
             echo -e "${HIGHLIGHT}Enter controller ID to test:${RESET} "
             read controller_id
             echo -e "${HIGHLIGHT}Testing controller $controller_id. Press Ctrl+C to exit.${RESET}"
-            sdl2-jstest --test $controller_id
+            sdl2-jstest --test "$controller_id"
             ;;
         18)
             operation_header "Launching evtest to view input devices..."
@@ -200,6 +190,12 @@ while true; do
             pause
             ;;
         20)
+            logging_menu
+            ;;
+        21)
+            wine_cellar_menu
+            ;;
+        22)
             exit 0
             ;;
         *)
@@ -207,4 +203,268 @@ while true; do
             pause
             ;;
     esac
+}
+
+# Function to display logging submenu
+show_logging_menu() {
+    clear
+    BORDER_LINE=""
+    for ((i=0; i<TERM_WIDTH; i++)); do
+        BORDER_LINE="${BORDER_LINE}-"
+    done
+
+    echo -e ""
+    echo -e "${TITLE}                         LOGGING MENU                         ${RESET}"
+    echo -e ""
+
+    echo -e "${MENU_NUM} 1.${RESET} ${MENU_TXT}View EmulationStation Launch Standard Error${RESET}"
+    echo -e "${MENU_NUM} 2.${RESET} ${MENU_TXT}View EmulationStation Launch Standard Output${RESET}"
+    echo -e "${MENU_NUM} 3.${RESET} ${MENU_TXT}Back to Main Menu${RESET}"
+
+    echo -e ""
+    echo -e "${HIGHLIGHT}Enter your choice [1-3]:${RESET} "
+}
+
+# Function to handle logging menu choices
+handle_logging_menu() {
+    local choice=$1
+    
+    case $choice in
+        1)
+            operation_header "Viewing EmulationStation Launch Standard Error log..."
+            tail -n 0 -f /userdata/system/logs/es_launch_stderr.log
+            ;;
+        2)
+            operation_header "Viewing EmulationStation Launch Standard Output log..."
+            tail -n 0 -f /userdata/system/logs/es_launch_stdout.log
+            ;;
+        3)
+            return 0
+            ;;
+        *)
+            echo -e "${WARNING}Invalid choice. Please try again.${RESET}"
+            pause
+            ;;
+    esac
+}
+
+# Function to display Wine Cellar submenu
+show_wine_cellar_menu() {
+    clear
+    BORDER_LINE=""
+    for ((i=0; i<TERM_WIDTH; i++)); do
+        BORDER_LINE="${BORDER_LINE}-"
+    done
+
+    echo -e ""
+    echo -e "${TITLE}                                  WINE CELLAR MENU                                  ${RESET}"
+    echo -e ""
+
+    echo -e "${MENU_NUM}  1.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015-2022 x86${RESET}    ${MENU_NUM} 11.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015-2022 x64${RESET}"
+    echo -e "${MENU_NUM}  2.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015-2019 x86${RESET}    ${MENU_NUM} 12.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015-2019 x64${RESET}"
+    echo -e "${MENU_NUM}  3.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2019 x86${RESET}         ${MENU_NUM} 13.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2019 x64${RESET}"
+    echo -e "${MENU_NUM}  4.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2017 x86${RESET}         ${MENU_NUM} 14.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2017 x64${RESET}"
+    echo -e "${MENU_NUM}  5.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015 x86${RESET}         ${MENU_NUM} 15.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2015 x64${RESET}"
+    echo -e "${MENU_NUM}  6.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2013 x86${RESET}         ${MENU_NUM} 16.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2013 x64${RESET}"
+    echo -e "${MENU_NUM}  7.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2012 x86${RESET}         ${MENU_NUM} 17.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2012 x64${RESET}"
+    echo -e "${MENU_NUM}  8.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2010 x86${RESET}         ${MENU_NUM} 18.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2010 x64${RESET}"
+    echo -e "${MENU_NUM}  9.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2008 x86${RESET}         ${MENU_NUM} 19.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2008 x64${RESET}"
+    echo -e "${MENU_NUM} 10.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2005 x86${RESET}         ${MENU_NUM} 20.${RESET} ${MENU_TXT}Prepare Visual C++ Redistributable 2005 x64${RESET}"
+    echo -e "${MENU_NUM} 21.${RESET} ${MENU_TXT}Back to Main Menu${RESET}"
+    echo -e "${BORDER}${BORDER_LINE}${RESET}"
+    echo -e "${HIGHLIGHT}Enter your choice [1-21]:${RESET} "
+}
+
+# Function to handle Wine Cellar menu choices
+handle_wine_cellar_menu() {
+    local choice=$1
+    
+    case $choice in
+        1)
+            operation_header "Downloading Visual C++ Redistributable 2015-2022 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2015_2022.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        11)
+            operation_header "Downloading Visual C++ Redistributable 2015-2022 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2015_2022.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        2)
+            operation_header "Downloading Visual C++ Redistributable 2015-2019 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2015_2019.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        12)
+            operation_header "Downloading Visual C++ Redistributable 2015-2019 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2015_2019.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        3)
+            operation_header "Downloading Visual C++ Redistributable 2019 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2019.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        13)
+            operation_header "Downloading Visual C++ Redistributable 2019 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2019.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        4)
+            operation_header "Downloading Visual C++ Redistributable 2017 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2017.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        14)
+            operation_header "Downloading Visual C++ Redistributable 2017 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2017.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        5)
+            operation_header "Downloading Visual C++ Redistributable 2015 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2015.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        15)
+            operation_header "Downloading Visual C++ Redistributable 2015 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2015.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        6)
+            operation_header "Downloading Visual C++ Redistributable 2013 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2013.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        16)
+            operation_header "Downloading Visual C++ Redistributable 2013 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2013.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        7)
+            operation_header "Downloading Visual C++ Redistributable 2012 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2012.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        17)
+            operation_header "Downloading Visual C++ Redistributable 2012 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2012.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        8)
+            operation_header "Downloading Visual C++ Redistributable 2010 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2010.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        18)
+            operation_header "Downloading Visual C++ Redistributable 2010 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2010.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        9)
+            operation_header "Downloading Visual C++ Redistributable 2008 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2008.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        19)
+            operation_header "Downloading Visual C++ Redistributable 2008 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2008.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        10)
+            operation_header "Downloading Visual C++ Redistributable 2005 x86..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x86_2005.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        20)
+            operation_header "Downloading Visual C++ Redistributable 2005 x64..."
+            ensure_wine_directory
+            wget -P /userdata/system/wine/exe https://batocera.org/users/liberodark/wine/vcredist_x64_2005.exe
+            echo -e "${HIGHLIGHT}Download complete.${RESET}"
+            pause
+            ;;
+        21)
+            return 0
+            ;;
+        *)
+            echo -e "${WARNING}Invalid choice. Please try again.${RESET}"
+            pause
+            ;;
+    esac
+}
+
+# Function for logging menu
+logging_menu() {
+    local choice
+    
+    while true; do
+        show_logging_menu
+        read choice
+        handle_logging_menu "$choice"
+        
+        # If user chose to return to main menu
+        if [ "$choice" = "3" ]; then
+            break
+        fi
+    done
+}
+
+# Function for wine cellar menu
+wine_cellar_menu() {
+    local choice
+    
+    while true; do
+        show_wine_cellar_menu
+        read choice
+        handle_wine_cellar_menu "$choice"
+        
+        # If user chose to return to main menu
+        if [ "$choice" = "21" ]; then
+            break
+        fi
+    done
+}
+
+# Main loop
+while true; do
+    show_main_menu
+    read choice
+    handle_main_menu "$choice"
 done
