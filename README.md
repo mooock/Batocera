@@ -2,6 +2,11 @@
 
 This script provides an interactive terminal interface to manage various Batocera system operations. It simplifies tasks such as restarting EmulationStation, managing Kodi, checking system status, and performing maintenance functions directly from the command line.
 
+![image](https://github.com/user-attachments/assets/e9a8f929-8319-4fd8-92f4-029d847a9fef)
+![image](https://github.com/user-attachments/assets/7508663b-9700-4355-a7e3-3846d1729932)
+![image](https://github.com/user-attachments/assets/fca104c7-af17-482b-a171-657cc9f07363)
+
+
 ## Installation
 To install this script, use the following command:
 
