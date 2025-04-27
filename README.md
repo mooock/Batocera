@@ -8,7 +8,7 @@ To install this script, use the following command:
 ```bash
 curl -L https://raw.githubusercontent.com/mooock/Batocera/refs/heads/main/app/install.sh | bash
 ```
-This will download and execute the installation script, setting up everything needed to run the Batocera management script on your system.
+This will download and execute the installation script, setting up everything needed to run the Batocera management script on your system. be sure to save overlay, for the menu to survive a reboot.
 
 ## Usage
 Just type "Menu" from SSH
@@ -24,5 +24,12 @@ The script offers a variety of operations for controlling and managing the Batoc
 - Restore default settings for RetroArch in case of issues.
 - Perform system updates, either stable or experimental.
 - Generate support packages for troubleshooting or sharing system information.
+- Tail looging for view launch outout and errors
+- deploy of Wine Redistributions of Visual C++
 
 The script is designed to simplify system maintenance and ensure users can perform these operations efficiently without needing to remember complex commands or navigate through multiple interfaces.
+
+## Location of the Menu
+```bash
+/usr/bin/menu
+```
